@@ -2,11 +2,11 @@ package com.github.aistech.orp.builder;
 
 import android.content.Intent;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.github.aistech.orp.activities.ORPActivity;
 import com.github.aistech.orp.singletons.ORPSingleton;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Builder used to create all the resources needed to start a new activity
@@ -23,6 +23,7 @@ public class ORPBuilder {
 
     /**
      * You shall init this builder passing the origin activity, a.k.a the source Activity.
+     *
      * @param originActivity
      */
     public ORPBuilder(ORPActivity originActivity) {
@@ -31,8 +32,9 @@ public class ORPBuilder {
     }
 
     /**
-     * Well, we want to send those objects to somewhere, so pass then destination
+     * Well, we want to send those objects to somewhere, so pass the destination
      * activity class here and I'll handle for you :)
+     *
      * @param activity
      * @return
      */
@@ -45,6 +47,7 @@ public class ORPBuilder {
      * Using the same behavior while using the {#link {@link Intent#putExtra} method,
      * you should pass the key associeated with the object that you want to send to the
      * destination activity.
+     *
      * @param key
      * @param object
      * @return
@@ -57,6 +60,7 @@ public class ORPBuilder {
     /**
      * In case you need the Intent already configured to use in other situations, I'll gonna be
      * good with you, you can get the all set Intent using this method.
+     *
      * @return
      */
     public Intent build() {
