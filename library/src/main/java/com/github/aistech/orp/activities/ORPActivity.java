@@ -4,11 +4,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-import java.lang.reflect.Field;
-
 import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.exceptions.ORPExceptions;
 import com.github.aistech.orp.singletons.ORPSingleton;
+
+import java.lang.reflect.Field;
 
 /**
  * The base Activity that will handle the object reference passing between activities.

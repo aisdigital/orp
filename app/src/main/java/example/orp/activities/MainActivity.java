@@ -1,60 +1,130 @@
 package example.orp.activities;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.github.aistech.orp.activities.ORPActivity;
-import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.builder.ORPBuilder;
 
+import org.parceler.Parcels;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
+import java.util.LinkedList;
+
 import example.orp.R;
+import example.orp.enums.PassingType;
 import example.orp.model.User;
+import example.orp.util.CountdownUtils;
 
 public class MainActivity extends ORPActivity {
 
-    private User user1;
-
-    // Set the parameter name is optional
-    @DestinationExtraObject()
-    private User cortana;
+    public static final PassingType PASSING_TYPE = PassingType.PARCEL;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState, this);
         setContentView(R.layout.activity_main);
 
-        // Look, at First the user name is Master Chief
-        this.user1 = new User("Master Chief", 117);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        (findViewById(R.id.fab_parcel)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new ORPBuilder(MainActivity.this)
-                        .withDestinationActivity(Main2Activity.class)
-                        .passingObject("user", user1)
-                        .start();
+
+                Glide.with(MainActivity.this)
+                        .load("http://i.imgur.com/TDROo.jpg")
+                        .into(new SimpleTarget<GlideDrawable>() {
+                            @Override
+                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                Bitmap bitmap = ((GlideBitmapDrawable) resource.getCurrent()).getBitmap();
+                                LinkedList<User> users = new LinkedList<User>();
+
+                                for (int x = 0; x < 10; x++) {
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                    users.add(new User("Master Chief", 117, new ByteArrayInputStream(stream.toByteArray()).toString()));
+                                }
+
+                                Log.w("ORP: ", "PARCEL");
+                                CountdownUtils.getInstance().start();
+
+                                Intent intent = new Intent(MainActivity.this, ParcelCaseActivity.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putParcelable("users", Parcels.wrap(users));
+                                intent.putExtras(bundle);
+                                MainActivity.this.startActivity(intent);
+                            }
+                        });
             }
         });
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+        (findViewById(R.id.fab_serialization)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-        // But as soon as the activity is resumed from the Main2Activity
-        // and since we changed his name on the other activity, guess what? Changed :)
-        Toast.makeText(this, this.user1.getName(), Toast.LENGTH_SHORT).show();
+                Glide.with(MainActivity.this)
+                        .load("http://i.imgur.com/TDROo.jpg")
+                        .into(new SimpleTarget<GlideDrawable>() {
+                            @Override
+                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                Bitmap bitmap = ((GlideBitmapDrawable) resource.getCurrent()).getBitmap();
+                                LinkedList<User> users = new LinkedList<User>();
 
-        // This is for the second time that this activity is launched from the Main2Activity.
-        // Showing not only that is possible to use more than one instance of the same activity class
-        // but there is no problem being the activity that send and recover the parameters.
-        //
-        // Cool isn't ? :D
-        if (this.cortana != null) {
-            Toast.makeText(this, this.cortana.getName(), Toast.LENGTH_SHORT).show();
-        }
+                                for (int x = 0; x < 10; x++) {
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                    users.add(new User("Master Chief", 117, new ByteArrayInputStream(stream.toByteArray()).toString()));
+                                }
+
+                                Log.w("ORP: ", "SERIAL");
+                                CountdownUtils.getInstance().start();
+
+                                Intent intent = new Intent(MainActivity.this, SerializationCaseActivity.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putSerializable("users", (Serializable) users);
+                                intent.putExtras(bundle);
+                                MainActivity.this.startActivity(intent);
+                            }
+                        });
+            }
+        });
+
+        (findViewById(R.id.fab_orp)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Glide.with(MainActivity.this)
+                        .load("http://i.imgur.com/TDROo.jpg")
+                        .into(new SimpleTarget<GlideDrawable>() {
+                            @Override
+                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                Bitmap bitmap = ((GlideBitmapDrawable) resource.getCurrent()).getBitmap();
+                                LinkedList<User> users = new LinkedList<User>();
+
+                                for (int x = 0; x < 10; x++) {
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                    users.add(new User("Master Chief", 117, new ByteArrayInputStream(stream.toByteArray()).toString()));
+                                }
+
+                                Log.w("ORP: ", "ORP");
+                                CountdownUtils.getInstance().start();
+
+                                new ORPBuilder(MainActivity.this)
+                                        .withDestinationActivity(ORPCaseActivity.class)
+                                        .passingObject("users", users)
+                                        .start();
+                            }
+                        });
+            }
+        });
     }
 }
