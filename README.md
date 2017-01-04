@@ -80,7 +80,7 @@ class DestinationActivity extends ORPActivity {
     // By changing the user name, the User in SourceActivity will already get the changes.
     this.user.setName("John-117");
     
-    // This will trigger the inner class instantiate in the SourceActivity
+    // This will trigger the anonymous inner class instantiated in the SourceActivity
     this.listener.onClick(someView);
     
     ...
