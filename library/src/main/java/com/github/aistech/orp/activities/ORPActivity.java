@@ -4,11 +4,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-import java.lang.reflect.Field;
-
 import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.exceptions.ORPExceptions;
 import com.github.aistech.orp.singletons.ORPSingleton;
+
+import java.lang.reflect.Field;
 
 /**
  * The base Activity that will handle the object reference passing between activities.
@@ -69,7 +69,17 @@ public class ORPActivity extends AppCompatActivity {
      * @param orpActivity
      */
     public static void parseParameters(ORPActivity orpActivity) {
-        for (Field field : orpActivity.getClass().getDeclaredFields()) {
+        Class clazz = orpActivity.getClass();
+
+        parseFields(orpActivity, clazz);
+
+        if (clazz.getSuperclass() == ORPActivity.class) return;
+
+        parseFields(orpActivity, clazz.getSuperclass());
+    }
+
+    private static void parseFields(ORPActivity orpActivity, Class<? extends ORPActivity> clazz) {
+        for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
             if (field.isAnnotationPresent(DestinationExtraObject.class)) {
                 try {

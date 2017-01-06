@@ -5,17 +5,12 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
-import com.github.aistech.orp.activities.ORPActivity;
-import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.builder.ORPBuilder;
 
 import example.orp.R;
 import example.orp.model.User;
 
-public class Main2Activity extends ORPActivity {
-
-    @DestinationExtraObject("user")
-    private User user;
+public class Main2Activity extends BaseActivity {
 
     private User anotherUser;
 
