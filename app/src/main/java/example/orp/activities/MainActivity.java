@@ -5,12 +5,14 @@ import android.support.design.widget.FloatingActionButton;
 import android.view.View;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.github.aistech.orp.activities.ORPActivity;
 import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.builder.ORPBuilder;
 
 import example.orp.R;
 import example.orp.model.User;
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends ORPActivity {
 
@@ -22,11 +24,14 @@ public class MainActivity extends ORPActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState, this);
+        super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_main);
 
         // Look, at First the user name is Master Chief
-        this.user1 = new User("Master Chief", 117);
+        if (user1 == null) {
+            this.user1 = new User("Master Chief", 117);
+        }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -56,5 +61,10 @@ public class MainActivity extends ORPActivity {
         if (this.cortana != null) {
             Toast.makeText(this, this.cortana.getName(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public ORPActivity getInstance() {
+        return this;
     }
 }

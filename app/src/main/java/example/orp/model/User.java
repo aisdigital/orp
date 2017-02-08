@@ -1,17 +1,22 @@
 package example.orp.model;
 
+import org.parceler.Parcel;
+
 /**
  * Created by Jonathan Nobre Ferreira on 07/12/16.
  */
-
+@Parcel(Parcel.Serialization.BEAN)
 public class User {
 
-    private String name;
-    private Integer age;
+    String name;
+    Integer age;
 
     public User(String name, Integer age) {
         this.name = name;
         this.age = age;
+    }
+
+    public User() {
     }
 
     /* Getters and Setters */
