@@ -9,8 +9,13 @@ import example.orp.model.User;
  * Created by jonathan on 06/01/17.
  */
 
-public class BaseActivity extends ORPActivity {
+public abstract class BaseActivity extends ORPActivity {
 
     @DestinationExtraObject("user")
     protected User user;
+
+    @Override
+    public ORPActivity getInstance() {
+        return this;
+    }
 }

@@ -5,6 +5,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import com.github.aistech.orp.activities.ORPActivity;
+import com.github.aistech.orp.annotations.DestinationExtraObject;
 import com.github.aistech.orp.builder.ORPBuilder;
 
 import example.orp.R;
@@ -12,18 +14,21 @@ import example.orp.model.User;
 
 public class Main2Activity extends BaseActivity {
 
+    @DestinationExtraObject
     private User anotherUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Need to call this in order to load the parameters
-        super.onCreate(savedInstanceState, this);
+        super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        this.anotherUser = new User("Cortana", 18);
+        if (anotherUser == null) {
+            this.anotherUser = new User("Cortana", 18);
+        }
 
         this.user.setName("Jonathan Nobre Ferreira");
 
