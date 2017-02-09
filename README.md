@@ -104,4 +104,8 @@ dependencies {
 }
 ```
 
-Also every model has to include the annotation ```java @Parcel(Parcel.Serialization.BEAN) ```
+Also every model has to include the annotation: 
+
+```java 
+@Parcel(Parcel.Serialization.BEAN)
+```
