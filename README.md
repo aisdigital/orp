@@ -55,10 +55,15 @@ class SourceActivity extends ORPActivity {
             .start();
     
     ...
+    
+    @Override
+    public ORPActivity getInstance() {
+        return this;
+    }
   }
 }
 ```
-
+One important thing, the activity must also implement getInstance in order to properly load the variables annotated.
 
 Furthermore, to retrieve the object passed in the destination activity you just need to put the `@DestinationExtraObject` on the respective field. 
 Also, you must use the `super.onCreate(savedInstanceState, this)` method in order to load and fullfill the fields.
@@ -87,3 +92,16 @@ class DestinationActivity extends ORPActivity {
   }
 }
 ```
+
+Parceler 
+==========
+
+This library start to use Parceler to save objects in activity state, so every module that has model objects must include the code below:
+
+```groovy
+dependencies {
+  annotationProcessor 'org.parceler:parceler:1.1.6'
+}
+```
+
+Also every model has to include the annotation ```java @Parcel(Parcel.Serialization.BEAN) ```
