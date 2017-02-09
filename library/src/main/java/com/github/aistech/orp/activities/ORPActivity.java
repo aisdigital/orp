@@ -22,6 +22,8 @@ import java.lang.reflect.Field;
 
 public abstract class ORPActivity extends AppCompatActivity implements ORProtocol {
 
+    public static final String TAG = ORPActivity.class.getSimpleName();
+
     /**
      * This constant is used recover the Caller (or if you want, origin) activity's hashCode who started
      * the current activity. This code is used to recover the extra parameters sent to the current activity.
@@ -32,8 +34,9 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         initializingParsing(savedInstanceState);
+
+        super.onCreate(savedInstanceState);
     }
 
     private void initializingParsing(@Nullable Bundle savedInstanceState) {
@@ -50,24 +53,25 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
      */
     @Deprecated
     protected void onCreate(@Nullable Bundle savedInstanceState, ORPActivity thisActivity) {
-        super.onCreate(savedInstanceState);
         initializingParsing(savedInstanceState);
+
+        super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
         saveInstanceStateForFields(outState, getInstance(), getInstance().getClass());
+
+        super.onSaveInstanceState(outState);
     }
 
     private void saveInstanceStateForFields(Bundle outState, ORPActivity thisActivity, Class<? extends ORPActivity> clazz) {
 
-        try {
-            clazz.getSuperclass().asSubclass(ORPActivity.class);
+        if (clazz.getSuperclass() != ORPActivity.class) {
             saveInstanceStateForFields(outState, thisActivity, (Class<? extends ORPActivity>) clazz.getSuperclass());
-        } catch (ClassCastException e) {
-            return;
         }
+
+        Log.i(TAG, "saveInstanceStateForFields() | " + clazz.getName());
 
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
@@ -83,7 +87,7 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
                     Object o = field.get(thisActivity);
                     if (o != null) {
                         outState.putParcelable(parameterKey, Parcels.wrap(o));
-                        Log.e(getInstance().getLocalClassName(), "SAVED: " + field.get(getInstance()).toString());
+                        Log.i(TAG, "Saved (" + parameterKey + "): " + field.get(getInstance()).toString() + " | " + clazz.getName());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -95,10 +99,14 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
 
     private void onRestoringState(@Nullable Bundle savedInstanceState, ORPActivity thisActivity, Class<? extends ORPActivity> clazz) {
 
-        try {
-            clazz.getSuperclass().asSubclass(ORPActivity.class);
+        if (clazz.getSuperclass() != ORPActivity.class) {
             onRestoringState(savedInstanceState, thisActivity, (Class<? extends ORPActivity>) clazz.getSuperclass());
-        } catch (ClassCastException e) {
+        }
+
+        Log.i(TAG, "onRestoringState() | " + clazz.getName());
+
+        if (savedInstanceState == null) {
+            Log.i(TAG, "savedInstanceState is null" + " | " + clazz.getName());
             return;
         }
 
@@ -112,18 +120,27 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
                     parameterKey = destinationExtraObject.value();
                 }
 
+                Log.i(TAG, "Trying to restore (" + parameterKey + ") | " + clazz.getName());
+
                 try {
-                    if (savedInstanceState != null) {
-                        Parcelable parcelable = savedInstanceState.getParcelable(parameterKey);
+                    Parcelable parcelable = savedInstanceState.getParcelable(parameterKey);
 
-                        Log.e(getInstance().getLocalClassName(), "RESTORING: " + field.get(getInstance()).toString());
+                    if (parcelable != null) {
+                        Log.i(TAG, "Recovered Parcelable (" + parcelable.toString() + ") | " + clazz.getName());
 
-                        if (parcelable != null) {
-                            Object o = Parcels.unwrap(parcelable);
-                            field.set(thisActivity, o);
-                        }
+                        Object object = Parcels.unwrap(parcelable);
+
+                        Log.i(TAG, "Recovered Object (" + object.toString() + ") | " + clazz.getName());
+
+                        field.set(thisActivity, object);
+
+                        Log.i(TAG, "Set object (" + object.toString() + ") in Field: " + field.getName());
+                    } else {
+                        Log.i(TAG, "parcelable for (" + parameterKey + ") is null" + " | " + clazz.getName());
                     }
+
                 } catch (Exception e) {
+                    Log.i(TAG, "Trying to restore | Exception: (" + e.getMessage() + ")");
                     e.printStackTrace();
                 }
             }
@@ -158,12 +175,11 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
      */
     private void parseFields(Class<? extends ORPActivity> clazz) {
 
-        try {
-            clazz.getSuperclass().asSubclass(ORPActivity.class);
+        if (clazz.getSuperclass() != ORPActivity.class) {
             parseFields((Class<? extends ORPActivity>) clazz.getSuperclass());
-        } catch (ClassCastException e) {
-            return;
         }
+
+        Log.i(TAG, "parseFields() | " + clazz.getName());
 
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
@@ -176,12 +192,22 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
                         parameterKey = destinationExtraObject.value();
                     }
 
+                    Log.i(TAG, "Trying to parse field (" + parameterKey + ") | " + clazz.getName());
+
                     Object object = ORPSingleton.getInstance().getParametersForOriginActivity(getInstance().getActivityCallerHashCode(), parameterKey);
-                    field.set(getInstance(), object);
+
+                    Log.i(TAG, "Object to set (" + object.toString() + ") | " + clazz.getName());
+
+                    if (object != null) {
+                        field.set(getInstance(), object);
+                        Log.i(TAG, "Object set (" + object.toString() + ") in Field: " + field.getName());
+                    } else {
+                        Log.i(TAG, "Object for (" + parameterKey + ") is null" + " | " + clazz.getName());
+                    }
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (ORPExceptions orpExceptions) {
-                    orpExceptions.printStackTrace();
+                    Log.i(TAG, "Trying to parse object | Exception: (" + orpExceptions.getMessage() + ")");
                 }
             }
         }

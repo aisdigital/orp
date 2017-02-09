@@ -13,4 +13,9 @@ public abstract class BaseActivity extends ORPActivity {
 
     @DestinationExtraObject("user")
     protected User user;
+
+    @Override
+    public ORPActivity getInstance() {
+        return this;
+    }
 }

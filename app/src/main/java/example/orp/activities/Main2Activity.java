@@ -44,8 +44,4 @@ public class Main2Activity extends BaseActivity {
         });
     }
 
-    @Override
-    public ORPActivity getInstance() {
-        return this;
-    }
 }
