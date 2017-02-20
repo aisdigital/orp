@@ -196,10 +196,12 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
 
                     Object object = ORPSingleton.getInstance().getParametersForOriginActivity(getInstance().getActivityCallerHashCode(), parameterKey);
 
-                    Log.i(TAG, "Object to set (" + object.toString() + ") | " + clazz.getName());
-
                     if (object != null) {
+
+                        Log.i(TAG, "Object to set (" + object.toString() + ") | " + clazz.getName());
+
                         field.set(getInstance(), object);
+
                         Log.i(TAG, "Object set (" + object.toString() + ") in Field: " + field.getName());
                     } else {
                         Log.i(TAG, "Object for (" + parameterKey + ") is null" + " | " + clazz.getName());
