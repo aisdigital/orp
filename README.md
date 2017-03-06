@@ -66,8 +66,6 @@ class SourceActivity extends ORPActivity {
 One important thing, the activity must also implement getInstance in order to properly load the variables annotated.
 
 Furthermore, to retrieve the object passed in the destination activity you just need to put the `@DestinationExtraObject` on the respective field. 
-Also, you must use the `super.onCreate(savedInstanceState, this)` method in order to load and fullfill the fields.
-
 
 ```java
 class DestinationActivity extends ORPActivity {
@@ -79,7 +77,7 @@ class DestinationActivity extends ORPActivity {
   private View.OnClickListener listener;
 
   @Override public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState, this);
+    super.onCreate(savedInstanceState);
     setContentView(R.layout.destination_activity);
     
     // By changing the user name, the User in SourceActivity will already get the changes.
