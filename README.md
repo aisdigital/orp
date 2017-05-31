@@ -23,7 +23,7 @@ In your app's build.gradle
 
 ```groovy
 dependencies {
-  compile 'com.github.aistech:orp:1.0.2'
+  compile 'com.github.aistech:orp:1.0.5'
 }
 ```
 
