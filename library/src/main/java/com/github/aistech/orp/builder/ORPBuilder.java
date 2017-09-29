@@ -1,5 +1,6 @@
 package com.github.aistech.orp.builder;
 
+import android.content.Context;
 import android.content.Intent;
 
 import com.github.aistech.orp.activities.ORPActivity;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 public class ORPBuilder {
 
-    private ORPActivity originActivity;
+    private Context origin;
     private Class<? extends ORPActivity> destinationActivity;
 
     private Map<String, Object> parameters;
@@ -24,10 +25,15 @@ public class ORPBuilder {
     /**
      * You shall init this builder passing the origin activity, a.k.a the source Activity.
      *
-     * @param originActivity
+     * @param origin
      */
-    public ORPBuilder(ORPActivity originActivity) {
-        this.originActivity = originActivity;
+    public ORPBuilder(ORPActivity origin) {
+        this.origin = origin;
+        this.parameters = new LinkedHashMap<>();
+    }
+
+    public ORPBuilder(Context origin) {
+        this.origin = origin;
         this.parameters = new LinkedHashMap<>();
     }
 
@@ -64,9 +70,9 @@ public class ORPBuilder {
      * @return
      */
     public Intent build() {
-        ORPSingleton.getInstance().addOriginActivity(this.originActivity, this.parameters);
-        Intent intent = new Intent(this.originActivity, this.destinationActivity);
-        intent.putExtra(ORPActivity.HASH_CODE_EXTRA, this.originActivity.hashCode());
+        ORPSingleton.getInstance().addOriginActivity(this.origin, this.parameters);
+        Intent intent = new Intent(this.origin, this.destinationActivity);
+        intent.putExtra(ORPActivity.HASH_CODE_EXTRA, this.origin.hashCode());
         return intent;
     }
 
@@ -75,6 +81,6 @@ public class ORPBuilder {
      * {#link {@link android.content.Context#startActivity} method, don't worry, here it is.
      */
     public void start() {
-        this.originActivity.startActivity(build());
+        this.origin.startActivity(build());
     }
 }

@@ -25,10 +25,10 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
     public static final String TAG = ORPActivity.class.getSimpleName();
 
     /**
-     * This constant is used recover the Caller (or if you want, origin) activity's hashCode who started
+     * This constant is used to recover the caller (or if you prefer, origin) activity's hashCode who started
      * the current activity. This code is used to recover the extra parameters sent to the current activity.
      */
-    public static final String HASH_CODE_EXTRA = ORPActivity.class.getName().concat("originActivityHashCode");
+    public static final String HASH_CODE_EXTRA = ORPActivity.class.getName().concat("originalCallerHashCode");
 
     private Integer activityCallerHashCode;
 
