@@ -1,5 +1,7 @@
 package com.github.aistech.orp.singletons;
 
+import android.content.Context;
+
 import com.github.aistech.orp.activities.ORPActivity;
 import com.github.aistech.orp.exceptions.ORPExceptions;
 
@@ -8,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * The All Might Singleton that will handle all your sins and misbehavior...no...just kidding,
+ * The almighty Singleton that will handle all your sins and misbehavior...no...just kidding,
  * this will only help you recover the object reference while using the {@link com.github.aistech.orp.builder.ORPBuilder}.
  * <p>
  * For your sins, well, may God have mercy on your soul.
@@ -34,13 +36,13 @@ public final class ORPSingleton {
     }
 
     /**
-     * As the method name says..you should add the origin class, or, the source activity.
+     * As the method name says...you should add the origin class, or, the source activity.
      *
-     * @param originActivity
+     * @param origin
      * @param parameters
      */
-    public void addOriginActivity(ORPActivity originActivity, Map<String, Object> parameters) {
-        Integer hashCode = originActivity.hashCode();
+    public void addOriginActivity(Context origin, Map<String, Object> parameters) {
+        Integer hashCode = origin.hashCode();
         Map<String, Object> recoveredParameters = this.parametersMap.get(hashCode);
         if (recoveredParameters == null) {
             recoveredParameters = new LinkedHashMap<>();
