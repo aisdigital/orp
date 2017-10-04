@@ -1,7 +1,7 @@
 package example.orp.activities;
 
 import com.github.aistech.orp.activities.ORPActivity;
-import com.github.aistech.orp.annotations.DestinationExtraObject;
+import com.github.aistech.orp.annotations.Extra;
 
 import example.orp.model.User;
 
@@ -11,11 +11,7 @@ import example.orp.model.User;
 
 public abstract class BaseActivity extends ORPActivity {
 
-    @DestinationExtraObject("user")
-    protected User user;
+    @Extra("user")
+    protected User firstUser;
 
-    @Override
-    public ORPActivity getInstance() {
-        return this;
-    }
 }

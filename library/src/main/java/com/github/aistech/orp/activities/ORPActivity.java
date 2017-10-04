@@ -1,15 +1,15 @@
 package com.github.aistech.orp.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import com.github.aistech.orp.annotations.DestinationExtraObject;
-import com.github.aistech.orp.exceptions.ORPExceptions;
+import com.github.aistech.orp.annotations.Extra;
 import com.github.aistech.orp.interfaces.ORProtocol;
-import com.github.aistech.orp.singletons.ORPSingleton;
+import com.github.aistech.orp.utils.ExtraIterator;
 
 import org.parceler.Parcels;
 
@@ -22,202 +22,200 @@ import java.lang.reflect.Field;
 
 public abstract class ORPActivity extends AppCompatActivity implements ORProtocol {
 
+    public static final Integer REQUEST_CODE = 2393;
     public static final String TAG = ORPActivity.class.getSimpleName();
 
-    /**
-     * This constant is used recover the Caller (or if you want, origin) activity's hashCode who started
-     * the current activity. This code is used to recover the extra parameters sent to the current activity.
-     */
-    public static final String HASH_CODE_EXTRA = ORPActivity.class.getName().concat("originActivityHashCode");
-
-    private Integer activityCallerHashCode;
+    public Boolean didLoadedExtras = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        initializingParsing(savedInstanceState);
-
         super.onCreate(savedInstanceState);
+        parseFields(getIntent().getExtras(), getInstance().getClass());
     }
 
-    private void initializingParsing(@Nullable Bundle savedInstanceState) {
-        recoverOriginHashCode();
-
-        parseFields(getInstance().getClass());
-
-        onRestoringState(savedInstanceState, getInstance(), getInstance().getClass());
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (didLoadedExtras) {
+            didLoadedExtras = false;
+            onExtrasRestored();
+        }
     }
 
-    /**
-     * @param savedInstanceState
-     * @deprecated Because now we get the instance using {@link ORProtocol#getInstance()}
-     */
-    @Deprecated
-    protected void onCreate(@Nullable Bundle savedInstanceState, ORPActivity thisActivity) {
-        initializingParsing(savedInstanceState);
-
-        super.onCreate(savedInstanceState);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            final Bundle bundle = data == null ? new Bundle() : data.getExtras();
+            if (!bundle.isEmpty()) {
+                new ExtraIterator(getInstance().getClass())
+                        .iterate(new ExtraIterator.ExtraFieldIterator() {
+                            @Override
+                            public void onFieldIterate(Field field, Extra extra, String parameterKey) {
+                                try {
+                                    Parcelable parcelable = bundle.getParcelable(parameterKey);
+                                    if (parcelable != null) {
+                                        Object object = Parcels.unwrap(parcelable);
+                                        field.set(getInstance(), object);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                        .execute();
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        saveInstanceStateForFields(outState, getInstance(), getInstance().getClass());
-
         super.onSaveInstanceState(outState);
+        saveInstanceStateForFields(outState, getInstance().getClass());
     }
 
-    private void saveInstanceStateForFields(Bundle outState, ORPActivity thisActivity, Class<? extends ORPActivity> clazz) {
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        onRestoringState(savedInstanceState, getInstance().getClass());
+    }
 
-        if (clazz.getSuperclass() != ORPActivity.class) {
-            saveInstanceStateForFields(outState, thisActivity, (Class<? extends ORPActivity>) clazz.getSuperclass());
+    @Override
+    public void finish() {
+        onFinishWithResult(new Intent(), new Bundle(), getInstance().getClass());
+        super.finish();
+    }
+
+    private void parseFields(final Bundle bundle, Class<? extends ORPActivity> clazz) {
+
+        if (bundle == null) {
+            Log.i(TAG, "bundle in parseFields() is null" + " | " + clazz.getName());
+            return;
         }
 
-        Log.i(TAG, "saveInstanceStateForFields() | " + clazz.getName());
+        if (clazz.getSuperclass() != ORPActivity.class) {
+            parseFields(bundle, (Class<? extends ORPActivity>) clazz.getSuperclass());
+        }
 
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            if (field.isAnnotationPresent(DestinationExtraObject.class)) {
-                DestinationExtraObject destinationExtraObject = field.getAnnotation(DestinationExtraObject.class);
-                String parameterKey = field.getName();
+        Log.i(TAG, "parseFields() for " + clazz.getName() + "with Bundle: " + bundle.toString());
 
-                if (!destinationExtraObject.value().isEmpty()) {
-                    parameterKey = destinationExtraObject.value();
-                }
-
-                try {
-                    Object o = field.get(thisActivity);
-                    if (o != null) {
-                        outState.putParcelable(parameterKey, Parcels.wrap(o));
-                        Log.i(TAG, "Saved (" + parameterKey + "): " + field.get(getInstance()).toString() + " | " + clazz.getName());
+        new ExtraIterator(clazz)
+                .iterate(new ExtraIterator.ExtraFieldIterator() {
+                    @Override
+                    public void onFieldIterate(Field field, Extra extra, String parameterKey) {
+                        try {
+                            Parcelable parcelable = bundle.getParcelable(parameterKey);
+                            if (parcelable != null) {
+                                Object object = Parcels.unwrap(parcelable);
+                                field.set(getInstance(), object);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }
+                })
+                .onFinish(new ExtraIterator.ExtraFieldIteratorFinished() {
+                    @Override
+                    public void onFinished() {
+                        didLoadedExtras = true;
+                    }
+                })
+                .execute();
     }
 
-    private void onRestoringState(@Nullable Bundle savedInstanceState, ORPActivity thisActivity, Class<? extends ORPActivity> clazz) {
+    private void saveInstanceStateForFields(final Bundle outState, Class<? extends ORPActivity> clazz) {
+
+        if (outState == null) {
+            Log.i(TAG, "bundle in saveInstanceStateForFields() is null" + " | " + clazz.getName());
+            return;
+        }
 
         if (clazz.getSuperclass() != ORPActivity.class) {
-            onRestoringState(savedInstanceState, thisActivity, (Class<? extends ORPActivity>) clazz.getSuperclass());
+            saveInstanceStateForFields(outState, (Class<? extends ORPActivity>) clazz.getSuperclass());
+        }
+
+        new ExtraIterator(clazz)
+                .iterate(new ExtraIterator.ExtraFieldIterator() {
+                    @Override
+                    public void onFieldIterate(Field field, Extra extra, String parameterKey) {
+                        try {
+                            Object object = field.get(getInstance());
+                            if (object != null)
+                                outState.putParcelable(parameterKey, Parcels.wrap(object));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .execute();
+    }
+
+    private void onRestoringState(final Bundle savedInstanceState, Class<? extends ORPActivity> clazz) {
+
+        if (savedInstanceState == null) {
+            Log.i(TAG, " bundle in onRestoringState() is null" + " | " + clazz.getName());
+            return;
+        }
+
+        if (clazz.getSuperclass() != ORPActivity.class) {
+            onRestoringState(savedInstanceState, (Class<? extends ORPActivity>) clazz.getSuperclass());
         }
 
         Log.i(TAG, "onRestoringState() | " + clazz.getName());
 
-        if (savedInstanceState == null) {
-            Log.i(TAG, "savedInstanceState is null" + " | " + clazz.getName());
-            return;
-        }
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            if (field.isAnnotationPresent(DestinationExtraObject.class)) {
-                DestinationExtraObject destinationExtraObject = field.getAnnotation(DestinationExtraObject.class);
-                String parameterKey = field.getName();
-
-                if (!destinationExtraObject.value().isEmpty()) {
-                    parameterKey = destinationExtraObject.value();
-                }
-
-                Log.i(TAG, "Trying to restore (" + parameterKey + ") | " + clazz.getName());
-
-                try {
-                    Parcelable parcelable = savedInstanceState.getParcelable(parameterKey);
-
-                    if (parcelable != null) {
-                        Log.i(TAG, "Recovered Parcelable (" + parcelable.toString() + ") | " + clazz.getName());
-
-                        Object object = Parcels.unwrap(parcelable);
-
-                        Log.i(TAG, "Recovered Object (" + object.toString() + ") | " + clazz.getName());
-
-                        field.set(thisActivity, object);
-
-                        Log.i(TAG, "Set object (" + object.toString() + ") in Field: " + field.getName());
-                    } else {
-                        Log.i(TAG, "parcelable for (" + parameterKey + ") is null" + " | " + clazz.getName());
+        new ExtraIterator(clazz)
+                .iterate(new ExtraIterator.ExtraFieldIterator() {
+                    @Override
+                    public void onFieldIterate(Field field, Extra extra, String parameterKey) {
+                        try {
+                            Parcelable parcelable = savedInstanceState.getParcelable(parameterKey);
+                            if (parcelable != null) {
+                                Object object = Parcels.unwrap(parcelable);
+                                field.set(getInstance(), object);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
-
-                } catch (Exception e) {
-                    Log.i(TAG, "Trying to restore | Exception: (" + e.getMessage() + ")");
-                    e.printStackTrace();
-                }
-            }
-        }
+                })
+                .onFinish(new ExtraIterator.ExtraFieldIteratorFinished() {
+                    @Override
+                    public void onFinished() {
+                        didLoadedExtras = true;
+                    }
+                })
+                .execute();
     }
 
-    private void recoverOriginHashCode() {
-        // God damn it Android, why don't you at least initialize the extras ¬¬
-        if (getIntent().getExtras() != null && getIntent().getExtras().containsKey(HASH_CODE_EXTRA)) {
-            this.activityCallerHashCode = getIntent().getIntExtra(HASH_CODE_EXTRA, 0);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        /*
-            As soon as this activity is destroyed, we remove the extras parameters from the singleton
-            that was sent to this one, because it won't need anymore.
-        */
-        ORPSingleton.getInstance().clearCurrentActivityParameters(this.activityCallerHashCode);
-    }
-
-    /* Utils */
-
-    /**
-     * Well, as soon as the current activity is started, preferably on the
-     * {@link ORPActivity#onCreate(Bundle)} method if you call,
-     * it will initialize all the variables that is annotated with {@link DestinationExtraObject}
-     * with the respective object reference recovered from {@link ORPSingleton}
-     * that matches with the value passed in the annotation.
-     */
-    private void parseFields(Class<? extends ORPActivity> clazz) {
+    private void onFinishWithResult(final Intent intent, final Bundle bundle, Class<? extends ORPActivity> clazz) {
 
         if (clazz.getSuperclass() != ORPActivity.class) {
-            parseFields((Class<? extends ORPActivity>) clazz.getSuperclass());
+            onFinishWithResult(intent, bundle, (Class<? extends ORPActivity>) clazz.getSuperclass());
         }
 
-        Log.i(TAG, "parseFields() | " + clazz.getName());
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            if (field.isAnnotationPresent(DestinationExtraObject.class)) {
-                try {
-                    DestinationExtraObject destinationExtraObject = field.getAnnotation(DestinationExtraObject.class);
-                    String parameterKey = field.getName();
-
-                    if (!destinationExtraObject.value().isEmpty()) {
-                        parameterKey = destinationExtraObject.value();
+        new ExtraIterator(clazz)
+                .iterate(new ExtraIterator.ExtraFieldIterator() {
+                    @Override
+                    public void onFieldIterate(Field field, Extra extra, String parameterKey) {
+                        try {
+                            Object object = field.get(getInstance());
+                            if (object != null) {
+                                bundle.putParcelable(parameterKey, Parcels.wrap(object));
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
-
-                    Log.i(TAG, "Trying to parse field (" + parameterKey + ") | " + clazz.getName());
-
-                    Object object = ORPSingleton.getInstance().getParametersForOriginActivity(getInstance().getActivityCallerHashCode(), parameterKey);
-
-                    if (object != null) {
-
-                        Log.i(TAG, "Object to set (" + object.toString() + ") | " + clazz.getName());
-
-                        field.set(getInstance(), object);
-
-                        Log.i(TAG, "Object set (" + object.toString() + ") in Field: " + field.getName());
-                    } else {
-                        Log.i(TAG, "Object for (" + parameterKey + ") is null" + " | " + clazz.getName());
+                })
+                .onFinish(new ExtraIterator.ExtraFieldIteratorFinished() {
+                    @Override
+                    public void onFinished() {
+                        intent.putExtras(bundle);
+                        setResult(RESULT_OK, intent);
                     }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (ORPExceptions orpExceptions) {
-                    Log.i(TAG, "Trying to parse object | Exception: (" + orpExceptions.getMessage() + ")");
-                }
-            }
-        }
+                })
+                .execute();
     }
 
-    /* getters and Setters */
-
-    public Integer getActivityCallerHashCode() {
-        return activityCallerHashCode;
-    }
+    protected abstract void onExtrasRestored();
 }

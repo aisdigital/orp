@@ -1,80 +1,69 @@
 package com.github.aistech.orp.builder;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 
 import com.github.aistech.orp.activities.ORPActivity;
-import com.github.aistech.orp.singletons.ORPSingleton;
+
+import org.parceler.Parcels;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * Builder used to create all the resources needed to start a new activity
- * and recover the object references passed in the {@link ORPBuilder#passingObject} method.
+ * and recover the object references passed in the {@link ORPBuilder#withObject} method.
  * Created by Jonathan Nobre Ferreira on 07/12/16.
  */
 
 public class ORPBuilder {
 
-    private ORPActivity originActivity;
+    private Context context;
     private Class<? extends ORPActivity> destinationActivity;
 
     private Map<String, Object> parameters;
 
-    /**
-     * You shall init this builder passing the origin activity, a.k.a the source Activity.
-     *
-     * @param originActivity
-     */
-    public ORPBuilder(ORPActivity originActivity) {
-        this.originActivity = originActivity;
-        this.parameters = new LinkedHashMap<>();
+    public ORPBuilder(Context context) {
+        this.context = context;
+        parameters = new LinkedHashMap<>();
     }
 
-    /**
-     * Well, we want to send those objects to somewhere, so pass the destination
-     * activity class here and I'll handle for you :)
-     *
-     * @param activity
-     * @return
-     */
     public ORPBuilder withDestinationActivity(Class<? extends ORPActivity> activity) {
-        this.destinationActivity = activity;
+        destinationActivity = activity;
         return this;
     }
 
-    /**
-     * Using the same behavior while using the {#link {@link Intent#putExtra} method,
-     * you should pass the key associeated with the object that you want to send to the
-     * destination activity.
-     *
-     * @param key
-     * @param object
-     * @return
-     */
-    public ORPBuilder passingObject(String key, Object object) {
-        this.parameters.put(key, object);
+    public ORPBuilder withObject(String key, Object object) {
+        parameters.put(key, object);
         return this;
     }
 
     /**
      * In case you need the Intent already configured to use in other situations, I'll gonna be
-     * good with you, you can get the all set Intent using this method.
-     *
-     * @return
+     * nice with you, you can get the all set Intent using this method.
      */
     public Intent build() {
-        ORPSingleton.getInstance().addOriginActivity(this.originActivity, this.parameters);
-        Intent intent = new Intent(this.originActivity, this.destinationActivity);
-        intent.putExtra(ORPActivity.HASH_CODE_EXTRA, this.originActivity.hashCode());
+        Intent intent = new Intent(context, destinationActivity);
+        Bundle bundle = new Bundle();
+
+        for (String key : parameters.keySet()) {
+            bundle.putParcelable(key, Parcels.wrap(parameters.get(key)));
+        }
+
+        intent.putExtras(bundle);
+
         return intent;
     }
 
-    /**
-     * But if you are lazy and you don't want to write the goddammit
-     * {#link {@link android.content.Context#startActivity} method, don't worry, here it is.
-     */
     public void start() {
-        this.originActivity.startActivity(build());
+        Intent intent = build();
+        if (context instanceof Activity) {
+            ((Activity) context).startActivityForResult(intent, ORPActivity.REQUEST_CODE);
+        } else {
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
     }
 }
