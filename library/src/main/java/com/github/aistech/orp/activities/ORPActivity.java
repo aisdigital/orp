@@ -70,14 +70,18 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        if (shouldSaveInstanceState()) {
+            saveInstanceStateForFields(outState, getInstance().getClass());
+        }
         super.onSaveInstanceState(outState);
-        saveInstanceStateForFields(outState, getInstance().getClass());
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        if (shouldSaveInstanceState()) {
+            onRestoringState(savedInstanceState, getInstance().getClass());
+        }
         super.onRestoreInstanceState(savedInstanceState);
-        onRestoringState(savedInstanceState, getInstance().getClass());
     }
 
     @Override
@@ -215,6 +219,10 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
                     }
                 })
                 .execute();
+    }
+
+    protected Boolean shouldSaveInstanceState() {
+        return true;
     }
 
     protected abstract void onExtrasRestored();
