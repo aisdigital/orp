@@ -68,6 +68,12 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
                                 }
                             }
                         })
+                        .onFinish(new ExtraIterator.ExtraFieldIteratorFinished() {
+                            @Override
+                            public void onFinished() {
+                                didLoadedExtras = true;
+                            }
+                        })
                         .execute();
             }
         }
