@@ -30,7 +30,13 @@ public abstract class ORPActivity extends AppCompatActivity implements ORProtoco
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        parseFields(getIntent().getExtras(), getInstance().getClass());
+        Bundle bundle = getIntent().getExtras() == null ? new Bundle() : getIntent().getExtras();
+
+        if (savedInstanceState != null) {
+            bundle.putAll(savedInstanceState);
+        }
+
+        parseFields(bundle, getInstance().getClass());
     }
 
     @Override
